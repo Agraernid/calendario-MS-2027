@@ -22,18 +22,54 @@
         .feriado-estadual { background-color: #c0392b; color: white; font-weight: bold; }
         .ponto-facultativo { background-color: #f39c12; color: white; font-weight: bold; }
         .normal { background-color: #ecf0f1; color: #333; }
+        <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 20px; margin: 0; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+        .subtitulo { text-align: center; color: #7f8c8d; font-size: 14px; margin-top: 0; margin-bottom: 20px; }
+        
+        .legenda { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; font-size: 14px; font-weight: bold; }
+        .legenda span { display: inline-block; width: 16px; height: 16px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+        
+        .ano-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .mes { border: 1px solid #ddd; border-radius: 6px; padding: 10px; }
+        .mes h2 { text-align: center; font-size: 16px; margin: 0 0 10px 0; color: #34495e; }
+        .dias-semana { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 12px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; }
+        .dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        
+        /* Configuração dos dias e do Tooltip (hover) */
+        .dia { 
+            text-align: center; padding: 6px 0; font-size: 12px; border-radius: 3px; 
+            position: relative; cursor: default; 
+        }
+        
+        /* A caixinha que aparece ao passar o mouse */
+        .dia[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2c3e50;
+            color: white;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 10;
+            margin-bottom: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-weight: normal;
+        }
+
+        .dia.vazio { background: transparent; }
+        
+        /* Cores dos eventos */
+        .feriado-nacional { background-color: #e74c3c; color: white; font-weight: bold; } /* Vermelho */
+        .feriado-estadual { background-color: #8e44ad; color: white; font-weight: bold; } /* Roxo */
+        .ponto-facultativo { background-color: #f39c12; color: white; font-weight: bold; } /* Laranja */
+        .normal { background-color: #ecf0f1; color: #333; }
     </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Calendário Agraer 2027</h1>
-        <div class="legenda">
-            <div><span style="background-color: #e74c3c;"></span> Feriado Nacional</div>
-            <div><span style="background-color: #c0392b;"></span> Feriado Estadual</div>
-            <div><span style="background-color: #f39c12;"></span> Ponto Facultativo</div>
-        </div>
-        <div id="calendario" class="ano-grid"></div>
-    </div>
 
     <script>
                 // COLE O SEU LINK CSV AQUI DENTRO DAS ASPAS:
@@ -43,12 +79,50 @@
         const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
         const ano = 2027;
 
-        async function carregarEventos() {
+                async function carregarEventos() {
             const eventos = {};
             try {
                 const response = await fetch(CSV_URL);
                 if (!response.ok) throw new Error("Erro ao baixar CSV");
                 const csvText = await response.text();
+                
+                const linhas = csvText.split(/\r?\n/).filter(linha => linha.trim() !== '');
+                
+                for (let i = 1; i < linhas.length; i++) {
+                    const colunas = linhas[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    
+                    if (colunas.length < 2) continue;
+                    
+                    const dataStr = colunas[0].replace(/["']/g, '').trim();
+                    let tipo = colunas[1].replace(/["']/g, '').trim().toLowerCase();
+                    
+                    // Pega a descrição e a observação se existirem na planilha
+                    const descricao = colunas[2] ? colunas[2].replace(/["']/g, '').trim() : '';
+                    const observacao = colunas[3] ? colunas[3].replace(/["']/g, '').trim() : '';
+                    
+                    // Remove acentos do tipo para achar a classe CSS correta
+                    tipo = tipo.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+                    tipo = tipo.replace(/\s+/g, '-');
+                    
+                    // Monta o texto do tooltip (Ex: "Carnaval" ou "Carnaval - Até às 13h")
+                    let textoTooltip = descricao;
+                    if (observacao && observacao !== '—' && observacao !== '-') {
+                        textoTooltip += ` (${observacao})`;
+                    }
+                    
+                    if (dataStr && tipo) {
+                        // Salva as informações do dia
+                        eventos[dataStr] = {
+                            classe: tipo,
+                            titulo: textoTooltip || 'Evento'
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error("Erro na leitura:", error);
+            }
+            return eventos;
+        }
                 
                 // Quebra o texto em linhas e remove linhas vazias
                 const linhas = csvText.split(/\r?\n/).filter(linha => linha.trim() !== '');
@@ -119,8 +193,10 @@
 
                     const dataCompleta = `${ano}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                     
-                    if (eventos[dataCompleta]) {
-                        diaDiv.classList.add(eventos[dataCompleta]);
+                                        if (eventos[dataCompleta]) {
+                        diaDiv.classList.add(eventos[dataCompleta].classe);
+                        // Adiciona o atributo que faz o tooltip aparecer
+                        diaDiv.setAttribute('data-tooltip', eventos[dataCompleta].titulo);
                     } else {
                         diaDiv.classList.add('normal');
                     }
