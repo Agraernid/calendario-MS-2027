@@ -5,7 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendário MS 2027</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 20px; margin: 0; }
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 20px; margin: 0; }
+        
+        /* NOVO: Estilo do brasão fixo na tela */
+        .brasao-lateral {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            height: 120px; /* Tamanho do brasão */
+            z-index: 1000; /* Garante que ele fique por cima de tudo */
+        }
         .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
         .subtitulo { text-align: center; color: #7f8c8d; font-size: 14px; margin-top: 0; margin-bottom: 20px; }
@@ -51,13 +60,17 @@
         .feriado-estadual { background-color: #8e44ad; color: white; font-weight: bold; } /* Roxo */
         .ponto-facultativo { background-color: #f39c12; color: white; font-weight: bold; } /* Laranja */
         .normal { background-color: #ecf0f1; color: #333; }
+                /* Esconde o brasão lateral em telas menores que 1300px */
+        @media (max-width: 1300px) {
+            .brasao-lateral { display: none; }
+        }
     </style>
 </head>
 <body>
-        <div class="container">
-        <div style="text-align: center; margin-bottom: 15px;">
-            <img src="brasao.png" alt="Brasão do Estado de MS" style="height: 80px;">
-        </div>
+            <!-- Brasão fixo no canto esquerdo -->
+    <img src="brasao.png" alt="Brasão do Estado de MS" class="brasao-lateral">
+
+    <div class="container">
         <h1>Calendário Agraer 2027</h1>
         <p class="subtitulo">Baseado no Decreto "E" nº 88, de 17/11/2026 — Governo do Estado de MS</p>
         
