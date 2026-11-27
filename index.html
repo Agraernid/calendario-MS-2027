@@ -36,46 +36,48 @@
     </div>
 
     <script>
-        // >>> COLE AQUI O LINK CSV QUE VOCÊ COPIOU NO PASSO 1 <<<
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/19qsxlYml99fslAicZKCgsl0aUHZiBU3ANopP0IrxCSc/edit?usp=sharing';
+                // COLE O SEU LINK CSV AQUI DENTRO DAS ASPAS:
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/19qsxlYml99fslAicZKCgsl0aUHZiBU3ANopP0IrxCSc/export?format=csv';
 
         const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
         const ano = 2027;
 
-        // Função para buscar e processar os dados da planilha
         async function carregarEventos() {
+            const eventos = {};
             try {
                 const response = await fetch(CSV_URL);
+                if (!response.ok) throw new Error("Erro ao baixar CSV");
                 const csvText = await response.text();
-                // Parse simples de CSV (linha por linha, coluna por vírgula)
-                const linhas = csvText.split('\n').filter(linha => linha.trim() !== '');
-                const eventos = {};
                 
-                // Pula a primeira linha (cabeçalho) e processa o resto
-                for (let i = 1; i < linhas.length; i++) {
-                    // Divide a linha por vírgula, mas lida com aspas simples se houver
-                    const colunas = linhas[i].match(/(".*?"|[^,]+)/g).map(c => c.replace(/^"|"$/g, '').trim());
+                // Quebra o texto em linhas e remove linhas vazias
+                const linhas = csvText.split(/\r?\n/).filter(linha => linha.trim() !== '');
+                
+                for (let i = 1; i < linhas.length; i++) { // Pula a linha 0 (cabeçalho)
+                    // Separa por vírgula, mas ignora vírgulas que estão dentro de aspas
+                    const colunas = linhas[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     
                     if (colunas.length < 2) continue;
                     
-                    const dataStr = colunas[0]; // Ex: 2027-01-01
-                    const tipo = colunas[1];    // Ex: FERIADO_NACIONAL
+                    // Pega a data (ex: 2027-01-01) e remove espaços ou aspas
+                    const dataStr = colunas[0].replace(/["']/g, '').trim();
                     
-                    // Converte a data para chave YYYY-MM-DD
-                    const dataObj = new Date(dataStr);
-                    const chave = `${dataObj.getFullYear()}-${String(dataObj.getMonth()+1).padStart(2,'0')}-${String(dataObj.getDate()).padStart(2,'0')}`;
+                    // Pega o tipo, remove aspas, espaços, acentos e converte para minúsculo
+                    let tipo = colunas[1].replace(/["']/g, '').trim().toLowerCase();
+                    tipo = tipo.normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Remove acentos
+                    tipo = tipo.replace(/\s+/g, '-'); // Troca espaços por hífen (feriado-nacional)
                     
-                    eventos[chave] = tipo.toLowerCase().replace(/_/g, '-'); // vira 'feriado-nacional'
+                    // Só adiciona se a data for válida e tiver um tipo
+                    if (dataStr && tipo) {
+                        eventos[dataStr] = tipo;
+                    }
                 }
-                return eventos;
             } catch (error) {
-                console.error("Erro ao carregar a planilha:", error);
-                return {};
+                console.error("Erro na leitura:", error);
             }
+            return eventos; // Retorna o que conseguiu ler (ou vazio se der erro)
         }
 
-        // Função principal que desenha o calendário
         async function desenharCalendario() {
             const eventos = await carregarEventos();
             const container = document.getElementById('calendario');
@@ -101,19 +103,15 @@
                 const diasDiv = document.createElement('div');
                 diasDiv.className = 'dias';
 
-                // Descobre o primeiro dia da semana do mês (0 = Domingo)
                 const primeiroDia = new Date(ano, m, 1).getDay();
-                // Descobre quantos dias o mês tem
                 const totalDias = new Date(ano, m + 1, 0).getDate();
 
-                // Cria os espaços vazios antes do dia 1
                 for (let i = 0; i < primeiroDia; i++) {
                     const vazio = document.createElement('div');
                     vazio.className = 'dia vazio';
                     diasDiv.appendChild(vazio);
                 }
 
-                // Cria os dias do mês
                 for (let d = 1; d <= totalDias; d++) {
                     const diaDiv = document.createElement('div');
                     diaDiv.className = 'dia';
@@ -133,6 +131,8 @@
                 container.appendChild(mesDiv);
             }
         }
+
+        desenharCalendario();
 
         desenharCalendario();
     </script>
