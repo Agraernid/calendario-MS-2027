@@ -67,7 +67,6 @@
     </div>
 
     <script>
-        // LINK CORRIGIDO PARA EXPORTAR CSV DIRETO DO SEU SHEETS
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/19qsxlYml99fslAicZKCgsl0aUHZiBU3ANopP0IrxCSc/export?format=csv';
 
         const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -84,7 +83,6 @@
                 const linhas = csvText.split(/\r?\n/).filter(linha => linha.trim() !== '');
                 
                 for (let i = 1; i < linhas.length; i++) {
-                    // Regex para separar colunas por vírgula sem quebrar textos com vírgula
                     const colunas = linhas[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     
                     if (colunas.length < 2) continue;
@@ -92,15 +90,12 @@
                     const dataStr = colunas[0].replace(/["']/g, '').trim();
                     let tipo = colunas[1].replace(/["']/g, '').trim().toLowerCase();
                     
-                    // Pega a descrição e a observação
                     const descricao = colunas[2] ? colunas[2].replace(/["']/g, '').trim() : '';
                     const observacao = colunas[3] ? colunas[3].replace(/["']/g, '').trim() : '';
                     
-                    // Remove acentos e troca espaços por hífen para virar classe CSS
                     tipo = tipo.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
                     tipo = tipo.replace(/\s+/g, '-');
                     
-                    // Monta o texto do tooltip
                     let textoTooltip = descricao;
                     if (observacao && observacao !== '—' && observacao !== '-') {
                         textoTooltip += ` (${observacao})`;
@@ -174,7 +169,6 @@
             }
         }
 
-        // Inicia o calendário
         desenharCalendario();
     </script>
 </body>
