@@ -5,24 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendário Agraer 2027</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 20px; }
-        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2c3e50; }
-        .legenda { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; font-size: 14px; }
-        .legenda span { display: inline-block; width: 16px; height: 16px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
-        .ano-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-        .mes { border: 1px solid #ddd; border-radius: 6px; padding: 10px; }
-        .mes h2 { text-align: center; font-size: 16px; margin: 0 0 10px 0; color: #34495e; }
-        .dias-semana { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 12px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; }
-        .dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-        .dia { text-align: center; padding: 6px 0; font-size: 12px; border-radius: 3px; }
-        .dia.vazio { background: transparent; }
-        /* Cores dos eventos */
-        .feriado-nacional { background-color: #e74c3c; color: white; font-weight: bold; }
-        .feriado-estadual { background-color: #c0392b; color: white; font-weight: bold; }
-        .ponto-facultativo { background-color: #f39c12; color: white; font-weight: bold; }
-        .normal { background-color: #ecf0f1; color: #333; }
-        <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 20px; margin: 0; }
         .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
@@ -70,16 +52,29 @@
         .ponto-facultativo { background-color: #f39c12; color: white; font-weight: bold; } /* Laranja */
         .normal { background-color: #ecf0f1; color: #333; }
     </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calendário Agraer 2027</h1>
+        <p class="subtitulo">Baseado no Decreto "E" nº 88, de 17/11/2026 — Governo do Estado de MS</p>
+        
+        <div class="legenda">
+            <div><span style="background-color: #e74c3c;"></span> Feriado Nacional</div>
+            <div><span style="background-color: #8e44ad;"></span> Feriado Estadual</div>
+            <div><span style="background-color: #f39c12;"></span> Ponto Facultativo</div>
+        </div>
+        <div id="calendario" class="ano-grid"></div>
+    </div>
 
     <script>
-                // COLE O SEU LINK CSV AQUI DENTRO DAS ASPAS:
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/19qsxlYml99fslAicZKCgsl0aUHZiBU3ANopP0IrxCSc/edit?usp=sharing';
+        // LINK CORRIGIDO PARA EXPORTAR CSV DIRETO DO SEU SHEETS
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/19qsxlYml99fslAicZKCgsl0aUHZiBU3ANopP0IrxCSc/export?format=csv';
 
         const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
         const ano = 2027;
 
-                async function carregarEventos() {
+        async function carregarEventos() {
             const eventos = {};
             try {
                 const response = await fetch(CSV_URL);
@@ -89,6 +84,7 @@
                 const linhas = csvText.split(/\r?\n/).filter(linha => linha.trim() !== '');
                 
                 for (let i = 1; i < linhas.length; i++) {
+                    // Regex para separar colunas por vírgula sem quebrar textos com vírgula
                     const colunas = linhas[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     
                     if (colunas.length < 2) continue;
@@ -96,22 +92,21 @@
                     const dataStr = colunas[0].replace(/["']/g, '').trim();
                     let tipo = colunas[1].replace(/["']/g, '').trim().toLowerCase();
                     
-                    // Pega a descrição e a observação se existirem na planilha
+                    // Pega a descrição e a observação
                     const descricao = colunas[2] ? colunas[2].replace(/["']/g, '').trim() : '';
                     const observacao = colunas[3] ? colunas[3].replace(/["']/g, '').trim() : '';
                     
-                    // Remove acentos do tipo para achar a classe CSS correta
+                    // Remove acentos e troca espaços por hífen para virar classe CSS
                     tipo = tipo.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
                     tipo = tipo.replace(/\s+/g, '-');
                     
-                    // Monta o texto do tooltip (Ex: "Carnaval" ou "Carnaval - Até às 13h")
+                    // Monta o texto do tooltip
                     let textoTooltip = descricao;
                     if (observacao && observacao !== '—' && observacao !== '-') {
                         textoTooltip += ` (${observacao})`;
                     }
                     
                     if (dataStr && tipo) {
-                        // Salva as informações do dia
                         eventos[dataStr] = {
                             classe: tipo,
                             titulo: textoTooltip || 'Evento'
@@ -122,34 +117,6 @@
                 console.error("Erro na leitura:", error);
             }
             return eventos;
-        }
-                
-                // Quebra o texto em linhas e remove linhas vazias
-                const linhas = csvText.split(/\r?\n/).filter(linha => linha.trim() !== '');
-                
-                for (let i = 1; i < linhas.length; i++) { // Pula a linha 0 (cabeçalho)
-                    // Separa por vírgula, mas ignora vírgulas que estão dentro de aspas
-                    const colunas = linhas[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    
-                    if (colunas.length < 2) continue;
-                    
-                    // Pega a data (ex: 2027-01-01) e remove espaços ou aspas
-                    const dataStr = colunas[0].replace(/["']/g, '').trim();
-                    
-                    // Pega o tipo, remove aspas, espaços, acentos e converte para minúsculo
-                    let tipo = colunas[1].replace(/["']/g, '').trim().toLowerCase();
-                    tipo = tipo.normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Remove acentos
-                    tipo = tipo.replace(/\s+/g, '-'); // Troca espaços por hífen (feriado-nacional)
-                    
-                    // Só adiciona se a data for válida e tiver um tipo
-                    if (dataStr && tipo) {
-                        eventos[dataStr] = tipo;
-                    }
-                }
-            } catch (error) {
-                console.error("Erro na leitura:", error);
-            }
-            return eventos; // Retorna o que conseguiu ler (ou vazio se der erro)
         }
 
         async function desenharCalendario() {
@@ -193,9 +160,8 @@
 
                     const dataCompleta = `${ano}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                     
-                                        if (eventos[dataCompleta]) {
+                    if (eventos[dataCompleta]) {
                         diaDiv.classList.add(eventos[dataCompleta].classe);
-                        // Adiciona o atributo que faz o tooltip aparecer
                         diaDiv.setAttribute('data-tooltip', eventos[dataCompleta].titulo);
                     } else {
                         diaDiv.classList.add('normal');
@@ -208,8 +174,7 @@
             }
         }
 
-        desenharCalendario();
-
+        // Inicia o calendário
         desenharCalendario();
     </script>
 </body>
